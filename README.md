@@ -22,7 +22,61 @@ Execute the C Program for the desired output.
 
 ## Write a C program that implements a producer-consumer system with two processes using Semaphores.
 ```
- 0 (Consumer must wait for Producer)
+/*
+ * sem.c - Producer-Consumer using Semaphores
+ */
+#include <stdio.h>      
+#include <stdlib.h>     
+#include <unistd.h>     
+#include <sys/types.h>  
+#include <sys/ipc.h>    
+#include <sys/sem.h>    
+#include <sys/wait.h>   
+#include <time.h>      
+
+#define NUM_LOOPS 10  // Number of producer-consumer cycles
+
+// Define union semun if not already available
+union semun {
+    int val;               
+    struct semid_ds *buf;  
+    unsigned short int *array; 
+    struct seminfo *__buf;
+};
+
+// Function to wait (P operation) on semaphore
+void wait_semaphore(int sem_set_id) {
+    struct sembuf sem_op;
+    sem_op.sem_num = 0;
+    sem_op.sem_op = -1;  // Decrease semaphore value (Wait)
+    sem_op.sem_flg = 0;
+    semop(sem_set_id, &sem_op, 1);
+}
+
+// Function to signal (V operation) on semaphore
+void signal_semaphore(int sem_set_id) {
+    struct sembuf sem_op;
+    sem_op.sem_num = 0;
+    sem_op.sem_op = 1;  // Increase semaphore value (Signal)
+    sem_op.sem_flg = 0;
+    semop(sem_set_id, &sem_op, 1);
+}
+
+int main() {
+    int sem_set_id;
+    union semun sem_val;
+    int child_pid;
+
+    // Create a semaphore set with one semaphore
+    sem_set_id = semget(IPC_PRIVATE, 1, 0600);
+    if (sem_set_id == -1) {
+        perror("semget");
+        exit(1);
+    }
+
+    printf("semaphore set created, semaphore set id '%d'.\n", sem_set_id);
+
+    // Initialize semaphore to 0 (Consumer must wait for Producer)
     sem_val.val = 0;
     if (semctl(sem_set_id, 0, SETVAL, sem_val) == -1) {
         perror("semctl");
@@ -65,13 +119,15 @@ Execute the C Program for the desired output.
     return 0;
 }
 
+
 ```
 
 
 
 ## OUTPUT
 $ ./sem.o 
-<img width="748" height="535" alt="Screenshot 2025-10-15 110600" src="https://github.com/user-attachments/assets/f956f548-554e-444d-9f51-7e6775930f9c" />
+
+<img width="797" height="806" alt="image" src="https://github.com/user-attachments/assets/5ee0bfe0-cc57-48c1-8bba-348e3708abf9" />
 
 
 
