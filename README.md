@@ -21,18 +21,63 @@ Execute the C Program for the desired output.
 # PROGRAM:
 
 ## Write a C program that implements a producer-consumer system with two processes using Semaphores.
+```
+ 0 (Consumer must wait for Producer)
+    sem_val.val = 0;
+    if (semctl(sem_set_id, 0, SETVAL, sem_val) == -1) {
+        perror("semctl");
+        exit(1);
+    }
 
+    // Fork a child process
+    child_pid = fork();
+
+    if (child_pid < 0) {
+        perror("fork");
+        exit(1);
+    }
+
+    if (child_pid == 0) {  
+        // CHILD PROCESS: Consumer
+        for (int i = 0; i < NUM_LOOPS; i++) {
+            wait_semaphore(sem_set_id);  // Wait for producer
+            printf("consumer: '%d'\n", i);
+            fflush(stdout);
+        }
+        exit(0);
+    } else {  
+        // PARENT PROCESS: Producer
+        for (int i = 0; i < NUM_LOOPS; i++) {
+            printf("producer: '%d'\n", i);
+            fflush(stdout);
+            signal_semaphore(sem_set_id);  // Signal consumer
+            usleep(500000); // Sleep to allow consumer to process
+        }
+
+        // Wait for child to finish
+        wait(NULL);
+
+        // Remove the semaphore set
+        semctl(sem_set_id, 0, IPC_RMID, sem_val);
+        printf("Semaphore removed.\n");
+    }
+
+    return 0;
+}
+
+```
 
 
 
 ## OUTPUT
 $ ./sem.o 
+<img width="748" height="535" alt="Screenshot 2025-10-15 110600" src="https://github.com/user-attachments/assets/f956f548-554e-444d-9f51-7e6775930f9c" />
+
 
 
 $ ipcs
 
-
-
+<img width="822" height="242" alt="Screenshot 2025-10-15 114423" src="https://github.com/user-attachments/assets/378c1787-2b72-414e-b03f-d7c28ba99612" />
 
 
 # RESULT:
